@@ -41,7 +41,7 @@ button {
 function checkin() {
   const pnr = document.getElementById("pnr").value.trim().toUpperCase();
 
-  fetch(`http://127.0.0.1:8000/web-checkin/${pnr}`, {
+  fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/web-checkin/${pnr}`, {
     method: "PUT"
   })
   .then(r => r.json())
