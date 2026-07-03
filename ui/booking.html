@@ -233,7 +233,7 @@ let trainData = null;
 journeyDate.min = new Date().toISOString().split("T")[0];
 
 function loadTrain() {
-  fetch(`http://127.0.0.1:8000/train/${trainNo.value}?journey_date=${journeyDate.value}`)
+  fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/train/${trainNo.value}?journey_date=${journeyDate.value}`)
     .then(r => r.json())
     .then(d => {
       if (d.message) return alert(d.message);
@@ -257,7 +257,7 @@ function selectClass(cls, el) {
   el.classList.add("active");
   selectedClass = cls;
 
-  fetch(`http://127.0.0.1:8000/availability/${trainNo.value}?journey_date=${journeyDate.value}`)
+  fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/availability/${trainNo.value}?journey_date=${journeyDate.value}`)
     .then(r => r.json())
     .then(d => {
       availability.innerHTML = `<b>${cls} Availability:</b> ${d[cls] ?? "N/A"} seats`;
@@ -316,7 +316,7 @@ function payNow() {
     p.age = new Date().getFullYear() - new Date(p.dob).getFullYear();
   });
 
-  fetch("http://127.0.0.1:8000/book-ticket", {
+  fetch("https://train-ticket-booking-system-fastapi-kafka.onrender.com/book-ticket", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
