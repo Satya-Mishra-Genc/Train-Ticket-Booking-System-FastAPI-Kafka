@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IRCTC | Train Ticket Booking</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+}
+
+header {
+  background: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  position: relative;
+}
+
+/* ✅ TATKAL BUTTON */
+.tatkal-btn {
+  position: absolute;
+  right: 20px;
+  top: 14px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #cb2d3e, #ef473a);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.tatkal-timer {
+  position: absolute;
+  right: 20px;
+  top: 48px;
+  font-size: 12px;
+  font-weight: bold;
+  color: #cb2d3e;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 30px auto;
+}
+
+.card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 25px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+input, select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.primary { background: #00b09b; color: white; }
+.secondary { background: #243b55; color: white; }
+
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.class-box {
+  padding: 20px;
+  border-radius: 12px;
+  background: #f4f4f4;
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.class-box.active {
+  background: #00b09b;
+  color: white;
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  width: 420px;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  🚆 IRCTC Train Ticket Booking
+
+  <button id="tatkalBtn" class="tatkal-btn" onclick="goTatkal()">
+    ⚡ Tatkal Booking
+  </button>
+
+  <div id="tatkalTimer" class="tatkal-timer"></div>
+</header>
+
+<div class="container">
+
+<!-- JOURNEY -->
+<div class="card">
+  <h3>Journey Details</h3>
+
+  <div class="grid">
+    <input id="trainNo" placeholder="Train Number">
+    <input type="date" id="journeyDate">
+  </div>
+
+  <br>
+  <button class="secondary" onclick="loadTrain()">Load Train</button>
+
+  <div id="trainInfo"></div>
+  <div id="classSection" class="class-grid"></div>
+  <div id="availability"></div>
+</div>
+
+<!-- PASSENGERS -->
+<div class="card disabled" id="passengerSection">
+  <h3>Passenger Details</h3>
+  <div id="passengerList"></div>
+  <button class="secondary" onclick="addPassenger()">Add Passenger</button>
+  <br><br>
+  <button class="primary" onclick="openPayment()">Book Ticket</button>
+</div>
+
+</div>
+
+<!-- PAYMENT -->
+<div class="modal" id="paymentModal">
+  <div class="modal-box">
+    <h3>💳 Payment Summary</h3>
+    <p id="paymentText"></p>
+    <button class="primary" onclick="payNow()">Pay</button>
+  </div>
+</div>
+
+<script>
+/*  TATKAL COUNTDOWN LOGIC */
+const tatkalBtn = document.getElementById("tatkalBtn");
+const tatkalTimer = document.getElementById("tatkalTimer");
+
+function updateTatkalTimer() {
+  const now = new Date();
+
+  const start = new Date();
+  start.setHours(11, 0, 0, 0);
+
+  const end = new Date();
+  end.setHours(11, 30, 0, 0);
+
+  if (now < start) {
+    const diff = start - now;
+    tatkalTimer.innerText = "Tatkal opens in " + formatTime(diff);
+    tatkalBtn.innerText = "⚡ Tatkal Booking";
+  } 
+  else if (now >= start && now <= end) {
+    tatkalTimer.innerHTML = "🔴 LIVE Tatkal Ticket Booking";
+    tatkalBtn.innerText = "🔴 LIVE Tatkal Ticket Booking";
+  }
+  else {
+    tatkalTimer.innerText = "Tatkal Closed";
+    tatkalBtn.innerText = "⚡ Tatkal Booking";
+  }
+}
+
+function formatTime(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+  const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+  const s = String(totalSeconds % 60).padStart(2, '0');
+  return `${h}:${m}:${s}`;
+}
+
+setInterval(updateTatkalTimer, 1000);
+updateTatkalTimer();
+
+/*  TATKAL REDIRECT */
+function goTatkal() {
+  window.location = "tatkal.html";
+}
+
+/* ---- EXISTING BOOKING LOGIC (UNCHANGED) ---- */
+
+const fareChart = {
+  SL: 500, "3A": 1200, "2A": 1800, "1A": 3000, "2S": 800
+};
+
+let selectedClass = null;
+let passengers = [];
+let trainData = null;
+
+journeyDate.min = new Date().toISOString().split("T")[0];
+
+function loadTrain() {
+  fetch(`http://127.0.0.1:8000/train/${trainNo.value}?journey_date=${journeyDate.value}`)
+    .then(r => r.json())
+    .then(d => {
+      if (d.message) return alert(d.message);
+      trainData = d;
+      trainInfo.innerHTML = `<b>${d.name}</b><br>${d.source} → ${d.destination}`;
+      renderClasses(d.name);
+    });
+}
+
+function renderClasses(trainName) {
+  const classes = ["SL","3A","2A","2S","1A"];
+  classSection.innerHTML = "";
+  classes.forEach(c => {
+    if (trainName.includes("Vande Bharat") && c !== "2S") return;
+    classSection.innerHTML += `<div class="class-box" onclick="selectClass('${c}', this)">${c}</div>`;
+  });
+}
+
+function selectClass(cls, el) {
+  document.querySelectorAll(".class-box").forEach(b => b.classList.remove("active"));
+  el.classList.add("active");
+  selectedClass = cls;
+
+  fetch(`http://127.0.0.1:8000/availability/${trainNo.value}?journey_date=${journeyDate.value}`)
+    .then(r => r.json())
+    .then(d => {
+      availability.innerHTML = `<b>${cls} Availability:</b> ${d[cls] ?? "N/A"} seats`;
+      passengerSection.classList.remove("disabled");
+      passengers = [];
+      passengerList.innerHTML = "";
+      addPassenger();
+    });
+}
+
+function addPassenger() {
+  passengers.push({ name:"", dob:"", gender:"Male", contact:"", berth:"Lower" });
+  renderPassengers();
+}
+
+function renderPassengers() {
+  passengerList.innerHTML = "";
+  passengers.forEach((p,i) => {
+    passengerList.innerHTML += `
+      <div class="card">
+        <b>Passenger ${i+1}</b><br><br>
+        <input placeholder="Name" onchange="passengers[${i}].name=this.value"><br><br>
+        <input type="date" onchange="passengers[${i}].dob=this.value"><br><br>
+        <select onchange="passengers[${i}].gender=this.value">
+          <option>Male</option><option>Female</option>
+        </select><br><br>
+        <input placeholder="Mobile" onchange="passengers[${i}].contact=this.value"><br><br>
+        <select onchange="passengers[${i}].berth=this.value">
+          <option>Lower</option><option>Upper</option>
+          <option>Side Lower</option><option>Side Upper</option>
+        </select>
+      </div>
+    `;
+  });
+}
+
+function calculateFare() {
+  let base = fareChart[selectedClass];
+  if (trainData.name.includes("Vande Bharat")) base += 700;
+  if (trainData.name.includes("Amrit Bharat")) base += 500;
+  return base * passengers.length;
+}
+
+function openPayment() {
+  paymentText.innerText =
+`Train: ${trainData.name}
+Class: ${selectedClass}
+Passengers: ${passengers.length}
+Total Fare: ₹${calculateFare()}`;
+  paymentModal.style.display = "flex";
+}
+
+function payNow() {
+  paymentModal.style.display = "none";
+  passengers.forEach(p => {
+    p.age = new Date().getFullYear() - new Date(p.dob).getFullYear();
+  });
+
+  fetch("http://127.0.0.1:8000/book-ticket", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      passengers,
+      train_no: trainNo.value,
+      journey_date: journeyDate.value,
+      seat_class: selectedClass === "SL" ? "Sleeper" : selectedClass
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (!d || !d.pnr) return alert("Booking failed");
+    sessionStorage.setItem("ticketData", JSON.stringify({
+      ...d,
+      seat_class: selectedClass,
+      amount: calculateFare()
+    }));
+    window.location = "confirmation.html";
+  });
+}
+</script>
+
+</body>
+</html>

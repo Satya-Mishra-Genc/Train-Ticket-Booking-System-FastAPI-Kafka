@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🚆 Train Schedule & Running Status</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+}
+
+header {
+  background: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+}
+
+input, button {
+  padding: 12px;
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+button {
+  background: #243b55;
+  color: white;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.section {
+  margin-top: 30px;
+}
+
+.card {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.live { color: green; }
+.arrived { color: gray; }
+.pending { color: orange; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+th, td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #eee;
+}
+</style>
+</head>
+
+<body>
+
+<header>🚆 Train Schedule & Running Status</header>
+
+<div class="container">
+
+  <input id="trainNo" placeholder="Enter Train Number">
+  <input type="date" id="journeyDate">
+  <button onclick="checkTrain()">Check Train Schedule</button>
+
+  <div id="result"></div>
+
+</div>
+
+<script>
+/*  DATE RULES */
+const todayObj = new Date();
+const maxObj = new Date();
+maxObj.setDate(todayObj.getDate() + 120);
+
+const today = todayObj.toISOString().split("T")[0];
+const max = maxObj.toISOString().split("T")[0];
+
+const journeyDateInput = document.getElementById("journeyDate");
+journeyDateInput.setAttribute("min", today);
+journeyDateInput.setAttribute("max", max);
+journeyDateInput.value = today; 
+
+function checkTrain() {
+
+  const trainNo = document.getElementById("trainNo").value.trim().toUpperCase();
+  const journeyDate = journeyDateInput.value;
+  const result = document.getElementById("result");
+
+  result.innerHTML = "";
+
+  if (!trainNo) {
+    alert("Please enter train number");
+    return;
+  }
+
+  /*  FETCH TRAIN SCHEDULE */
+  fetch(`http://127.0.0.1:8000/train/${trainNo}?journey_date=${journeyDate}`)
+    .then(res => res.json())
+    .then(train => {
+
+      if (train.message) {
+        result.innerHTML = `<p style="color:red;">${train.message}</p>`;
+        return;
+      }
+
+      let output = `
+        <div class="section">
+          <div class="card">🚆 Train No: ${train.train_no}</div>
+          <div class="card">🛤 Route: ${train.source} → ${train.destination}</div>
+          <div class="card">📅 Running Days: ${train.running_days.join(", ")}</div>
+        </div>
+      `;
+
+      let rows = train.stops.map(s => `
+        <tr>
+          <td>${s.station}</td>
+          <td>${s.arr}</td>
+          <td>${s.dep}</td>
+        </tr>
+      `).join("");
+
+      output += `
+        <div class="section">
+          <h3>🕒 Stops & Timings</h3>
+          <table>
+            <tr>
+              <th>Station</th>
+              <th>Arrival</th>
+              <th>Departure</th>
+            </tr>
+            ${rows}
+          </table>
+        </div>
+      `;
+
+      result.innerHTML = output;
+
+      /*  FETCH RUNNING STATUS */
+      fetch(`http://127.0.0.1:8000/status/${trainNo}?journey_date=${journeyDate}`)
+        .then(res => res.json())
+        .then(status => {
+
+          if (status.message) return;
+
+          //  TODAY → LIVE STATUS
+          if (journeyDate === today && status.status === "Running") {
+            result.innerHTML += `
+              <div class="section">
+                <h3>📍 Running Status <span class="live">(LIVE)</span></h3>
+                <div class="card">📍 Current Station: ${status.current_station}</div>
+                <div class="card">➡ Next Station: ${status.next_station}</div>
+                <div class="card">🕒 Scheduled Arrival: ${status.scheduled_arrival}</div>
+                <div class="card">🚨 Delay: ${status.delay}</div>
+              </div>
+            `;
+            return;
+          }
+
+          //  Past journey
+          if (status.status === "Completed") {
+            result.innerHTML += `
+              <div class="section">
+                <h3>📍 Running Status</h3>
+                <div class="card arrived"> Journey completed</div>
+                <div class="card">🚨 Delay: ${status.delay}</div>
+              </div>
+            `;
+            return;
+          }
+
+          //  Future journey
+          if (status.status === "Yet to start") {
+            result.innerHTML += `
+              <div class="section">
+                <h3>📍 Running Status</h3>
+                <div class="card pending">⏳ Journey not started yet</div>
+              </div>
+            `;
+          }
+        });
+    });
+}
+</script>
+
+</body>
+</html>

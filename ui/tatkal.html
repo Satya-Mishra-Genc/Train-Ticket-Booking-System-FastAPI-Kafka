@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>⚡ Tatkal Ticket Booking</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+header {
+  background: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 30px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+}
+
+.status-open {
+  background: #e8fff1;
+  border-left: 6px solid green;
+  padding: 12px;
+  font-weight: bold;
+}
+
+.status-closed {
+  background: #ffecec;
+  border-left: 6px solid red;
+  padding: 12px;
+  font-weight: bold;
+}
+
+.status-wait {
+  background: #fff8e1;
+  border-left: 6px solid orange;
+  padding: 12px;
+  font-weight: bold;
+}
+
+.card {
+  background: #f5f5f5;
+  padding: 18px;
+  border-radius: 12px;
+  margin-top: 15px;
+}
+
+button {
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #cb2d3e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+}
+
+input, select {
+  padding: 10px;
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<header>⚡ IRCTC Tatkal Ticket Booking</header>
+
+<div class="container">
+
+  <div id="tatkalStatus"></div>
+  <div id="trainList"></div>
+
+  <div id="bookingSection" style="display:none;">
+    <h3>👤 Passenger Details (Tatkal)</h3>
+    <div id="passengerList"></div>
+    <button onclick="addPassenger()">Add Passenger</button>
+    <br><br>
+    <button onclick="payTatkal()">Pay & Book Tatkal</button>
+  </div>
+
+</div>
+
+<script>
+const now = new Date();
+const startTime = new Date();
+startTime.setHours(11,0,0,0);
+
+const endTime = new Date();
+endTime.setHours(11,30,0,0);
+
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const journeyDate = tomorrow.toISOString().split("T")[0];
+
+let tatkalOpen = now >= startTime && now <= endTime;
+let selectedTrain = null;
+let passengers = [];
+
+const statusDiv = document.getElementById("tatkalStatus");
+const trainList = document.getElementById("trainList");
+const bookingSection = document.getElementById("bookingSection");
+const passengerList = document.getElementById("passengerList");
+
+if (now < startTime) {
+  statusDiv.innerHTML = `<div class="status-wait"> Tatkal booking opens at 11:00 AM</div>`;
+} else if (tatkalOpen) {
+  statusDiv.innerHTML = `<div class="status-open"> Tatkal booking is OPEN (11:00 – 11:30)</div>`;
+} else {
+  statusDiv.innerHTML = `<div class="status-closed"> Tatkal booking CLOSED</div>`;
+}
+
+async function loadTatkalTrains() {
+
+  if (!tatkalOpen) return;
+
+  // Simulated train list (frontend-level demo)
+  const tatkalTrains = ["22887", "18463", "12075", "12245"];
+
+  for (let trainNo of tatkalTrains) {
+
+    const res = await fetch(`http://127.0.0.1:8000/train/${trainNo}?journey_date=${journeyDate}`);
+    const train = await res.json();
+    if (train.message) continue;
+
+    trainList.innerHTML += `
+      <div class="card">
+        🚆 <b>${train.name}</b> (${train.train_no})<br>
+        ${train.source} → ${train.destination}<br>
+        Tatkal Seats: Limited (5)<br><br>
+        <button onclick="selectTrain('${train.train_no}')">Book Tatkal</button>
+      </div>
+    `;
+  }
+}
+
+function selectTrain(trainNo) {
+  selectedTrain = trainNo;
+  bookingSection.style.display = "block";
+  passengers = [];
+  passengerList.innerHTML = "";
+  addPassenger();
+}
+
+function addPassenger() {
+  passengers.push({ name:"", dob:"", gender:"Male", contact:"", berth:"Lower" });
+  renderPassengers();
+}
+
+function renderPassengers() {
+  passengerList.innerHTML = "";
+  passengers.forEach((p,i) => {
+    passengerList.innerHTML += `
+      <div class="card">
+        <input placeholder="Name" onchange="passengers[${i}].name=this.value">
+        <input type="date" onchange="passengers[${i}].dob=this.value">
+        <select onchange="passengers[${i}].gender=this.value">
+          <option>Male</option><option>Female</option>
+        </select>
+        <input placeholder="Mobile" onchange="passengers[${i}].contact=this.value">
+      </div>
+    `;
+  });
+}
+
+function payTatkal() {
+
+  passengers.forEach(p => {
+    p.age = new Date().getFullYear() - new Date(p.dob).getFullYear();
+  });
+
+  const tatkalFare = 2000 * passengers.length;
+  alert(`Tatkal Fare: Rs. ${tatkalFare}`);
+
+  fetch("http://127.0.0.1:8000/book-ticket", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      passengers,
+      train_no: selectedTrain,
+      journey_date: journeyDate,
+      seat_class: "Tatkal"
+    })
+  })
+  .then(r => r.json())
+  .then(d => {
+    sessionStorage.setItem("ticketData", JSON.stringify({
+      ...d,
+      seat_class: "Tatkal",
+      amount: tatkalFare,
+      quota: "TATKAL"
+    }));
+    window.location = "confirmation.html";
+  });
+}
+
+loadTatkalTrains();
+</script>
+
+</body>
+</html>

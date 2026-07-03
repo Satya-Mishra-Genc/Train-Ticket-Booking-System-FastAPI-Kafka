@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>IRCTC | Web Check‑in</title>
+<style>
+body {
+  font-family: 'Segoe UI';
+  background: linear-gradient(135deg, #141e30, #243b55);
+}
+.container {
+  max-width: 500px;
+  margin: 100px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+}
+input, button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+}
+button {
+  background: #00b09b;
+  color: white;
+  font-weight: bold;
+  border: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>✅ Web Check‑in</h2>
+  <input id="pnr" placeholder="Enter PNR">
+  <button onclick="checkin()">Complete Web Check‑in</button>
+</div>
+
+<script>
+function checkin() {
+  const pnr = document.getElementById("pnr").value.trim().toUpperCase();
+
+  fetch(`http://127.0.0.1:8000/web-checkin/${pnr}`, {
+    method: "PUT"
+  })
+  .then(r => r.json())
+  .then(d => {
+
+    // ✅ Already checked-in
+    if (d.status === "ALREADY_CHECKED_IN") {
+      alert("✅ Ticket already checked-in. You can download your boarding slip.");
+      sessionStorage.setItem("ticketData", JSON.stringify(d));
+      window.location = "confirmation.html";
+      return;
+    }
+
+    // ✅ Fresh check-in success
+    if (d.status === "SUCCESS") {
+      alert("✅ Journey Confirmed & Web Check-in Completed");
+      sessionStorage.setItem("ticketData", JSON.stringify(d));
+      window.location = "confirmation.html";
+      return;
+    }
+
+    // ❌ Failure
+    alert(d.reason || "Web check-in failed");
+  });
+}
+</script>
+
+</body>
+</html>

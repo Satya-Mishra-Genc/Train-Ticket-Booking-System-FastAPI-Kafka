@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>🪑 Seat Availability</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+}
+
+header {
+  background: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 700px;
+  margin: 50px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+}
+
+input, button {
+  padding: 12px;
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+button {
+  background: #243b55;
+  color: white;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+.result {
+  margin-top: 25px;
+}
+
+.card {
+  background: #f5f5f5;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.green { color: green; }
+.orange { color: orange; }
+.red { color: red; }
+</style>
+</head>
+
+<body>
+
+<header>🪑 Seat Availability</header>
+
+<div class="container">
+
+  <input id="trainNo" placeholder="Enter Train Number">
+  <input type="date" id="journeyDate">
+
+  <button onclick="checkAvailability()">Check</button>
+
+  <div class="result" id="result"></div>
+
+</div>
+
+<script>
+/*  DATE RULES: TODAY → +120 DAYS */
+const today = new Date();
+const maxDate = new Date();
+maxDate.setDate(today.getDate() + 120);
+
+const min = today.toISOString().split("T")[0];
+const max = maxDate.toISOString().split("T")[0];
+
+const journeyDateInput = document.getElementById("journeyDate");
+journeyDateInput.setAttribute("min", min);
+journeyDateInput.setAttribute("max", max);
+
+function checkAvailability() {
+
+  const trainNo = document.getElementById("trainNo").value.trim();
+  const journeyDate = journeyDateInput.value;
+  const result = document.getElementById("result");
+
+  result.innerHTML = "";
+
+  if (!trainNo || !journeyDate) {
+    alert("Please enter train number and journey date");
+    return;
+  }
+
+  /*  SAFETY CHECK (IF USER HACKS HTML) */
+  if (journeyDate < min || journeyDate > max) {
+    alert("Seat availability allowed only from today up to 120 days");
+    return;
+  }
+
+  fetch(`http://127.0.0.1:8000/availability/${trainNo}?journey_date=${journeyDate}`)
+    .then(res => res.json())
+    .then(data => {
+
+      if (data.status === "CLOSED") {
+  result.innerHTML = `<p style="color:orange; font-weight:bold;">${data.message}</p>`;
+  return;
+}
+
+if (data.message) {
+  result.innerHTML = `<p style="color:red;">${data.message}</p>`;
+  return;
+}
+
+      for (let cls in data) {
+
+        let seats = "N/A";
+        let color = "red";
+
+        /*  HANDLE BOTH BACKEND DATA SHAPES */
+        if (typeof data[cls] === "number") {
+          seats = data[cls];
+        } else if (typeof data[cls] === "object" && data[cls].available !== undefined) {
+          seats = data[cls].available;
+        }
+
+        /*  COLOR CODING */
+        if (seats >= 50) color = "green";
+        else if (seats >= 10) color = "orange";
+        else color = "red";
+
+        result.innerHTML += `
+          <div class="card ${color}">
+            ${cls} : ${seats} seats
+          </div>
+        `;
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      result.innerHTML = "<p style='color:red;'>Failed to load seat availability</p>";
+    });
+}
+</script>
+
+</body>
+</html>

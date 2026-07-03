@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IRCTC | Indian Railways Login</title>
+
+<style>
+/* ================= GLOBAL ================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  height: 100vh;
+  background: linear-gradient(120deg, #0f2027, #203a43, #2c5364);
+  overflow: hidden;
+}
+
+/* ================= BACKGROUND TRAINS ================= */
+.train-bg {
+  position: absolute;
+  bottom: 40px;
+  width: 200%;
+  height: 120px;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffffff20 0px,
+    #ffffff20 40px,
+    transparent 40px,
+    transparent 80px
+  );
+  animation: moveTrain 25s linear infinite;
+}
+
+@keyframes moveTrain {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ================= HEADER ================= */
+.header {
+  position: absolute;
+  top: 20px;
+  width: 100%;
+  text-align: center;
+  color: white;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 36px;
+  letter-spacing: 1px;
+}
+
+.header p {
+  margin-top: 6px;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* ================= LOGIN CARD ================= */
+.container {
+  position: relative;
+  z-index: 10;
+  width: 380px;
+  margin: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(14px);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.35);
+  color: white;
+}
+
+.container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* ================= INPUTS ================= */
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+}
+
+/* ================= BUTTON ================= */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  background: linear-gradient(135deg, #1d976c, #159957);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* ================= LINKS & ERROR ================= */
+.link {
+  text-align: center;
+  margin-top: 14px;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: underline;
+}
+
+.error {
+  color: #ffb3b3;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 5px;
+}
+
+/* ================= TRAINS INFO ================= */
+.trains {
+  margin-top: 20px;
+  font-size: 13px;
+  opacity: 0.9;
+  text-align: center;
+}
+
+.trains span {
+  display: inline-block;
+  margin: 4px 6px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.15);
+}
+
+/* ================= FOOTER ================= */
+.footer {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  text-align: center;
+  color: white;
+  font-size: 12px;
+  opacity: 0.7;
+}
+</style>
+</head>
+
+<body>
+
+<!-- Animated background -->
+<div class="train-bg"></div>
+
+<!-- Header -->
+<div class="header">
+  <h1>🚆 Indian Railways – IRCTC</h1>
+  <p>Welcome to Online Train Ticket Booking System</p>
+</div>
+
+<!-- Login Card -->
+<div class="container">
+
+  <h2 id="title">Login</h2>
+
+  <input type="email" id="email" placeholder="IRCTC Email (@irctc.com)">
+  <input type="password" id="password" placeholder="Password">
+
+  <div id="error" class="error"></div>
+
+  <button onclick="handleAction()">Login</button>
+
+  <div class="link" onclick="toggleForm()">
+    First time user? Create Account
+  </div>
+
+  <!-- Trains showcase -->
+  <div class="trains">
+    <span>🚄 Vande Bharat</span>
+    <span>🚆 Rajdhani</span>
+    <span>🚆 Humsafar</span>
+    <span>🚆 Amrit Bharat</span>
+    <span>🚆 Jan Shatabdi</span>
+    <span>⚡ WAP‑7 Engine</span>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  © Indian Railways | IRCTC | Secure & Fast Booking
+</div>
+
+<script>
+let isLogin = true;
+
+function toggleForm() {
+  isLogin = !isLogin;
+
+  title.innerText = isLogin ? "Login" : "Create Account";
+  document.querySelector("button").innerText = isLogin ? "Login" : "Signup";
+  document.querySelector(".link").innerText =
+    isLogin ? "First time user? Create Account"
+            : "Already have an account? Login";
+
+  error.innerText = "";
+}
+
+function validate(email, password) {
+  if (!email || !password)
+    return "All fields are required";
+
+  if (!email.endsWith("@irctc.com"))
+    return "Use only @irctc.com email";
+
+  if (password.length < 5)
+    return "Password must be at least 5 characters";
+
+  return null;
+}
+
+function handleAction() {
+
+  const emailVal = email.value;
+  const passVal = password.value;
+
+  const err = validate(emailVal, passVal);
+  if (err) {
+    error.innerText = err;
+    return;
+  }
+
+  const endpoint = isLogin ? "login" : "signup";
+
+  fetch(`http://127.0.0.1:8000/${endpoint}?email=${emailVal}&password=${passVal}`, {
+    method: "POST"
+  })
+  .then(res => res.json())
+  .then(data => {
+
+    if (data.detail) {
+      error.innerText = data.detail;
+      return;
+    }
+
+    error.innerText = "";
+
+    if (!isLogin) {
+      alert("Account created successfully!");
+      toggleForm();
+      return;
+    }
+
+    alert("Login successful!");
+    localStorage.setItem("token", data.access_token);
+    window.location = "dashboard.html";
+  })
+  .catch(() => {
+    error.innerText = "Server error";
+  });
+}
+</script>
+
+</body>
+</html>

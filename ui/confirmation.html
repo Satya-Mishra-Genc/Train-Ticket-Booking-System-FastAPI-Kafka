@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IRCTC | Ticket Confirmation</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+}
+
+header {
+  background: white;
+  padding: 20px;
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 1000px;
+  margin: 30px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+}
+
+.success {
+  background: #e8fff1;
+  border-left: 6px solid #2e7d32;
+  padding: 15px;
+  margin-bottom: 20px;
+  color: #1b5e20;
+  font-weight: bold;
+}
+
+.ticket {
+  border: 2px dashed #2e7d32;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+th, td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background: #eee;
+}
+
+button {
+  margin-top: 20px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  background: #00b09b;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<header> IRCTC Ticket Confirmation</header>
+
+<div class="container">
+
+  <div class="success">
+     Payment Successful – Ticket Confirmed
+  </div>
+
+  <div class="ticket">
+    <h3>🎟️ IRCTC e‑Ticket</h3>
+
+    <div class="grid">
+      <div><b>PNR:</b> <span id="pnr"></span></div>
+      <div><b>Train:</b> <span id="train"></span></div>
+      <div><b>Route:</b> <span id="route"></span></div>
+      <div><b>Journey Date:</b> <span id="date"></span></div>
+      <div><b>Class:</b> <span id="seatClass"></span></div>
+      <div><b>Fare Paid:</b> <span id="amount"></span></div>
+      <div><b>Booking Time:</b> <span id="time"></span></div>
+      <div><b>Status:</b> CONFIRMED</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Gender</th>
+          <th>Coach</th>
+          <th>Seat</th>
+          <th>Berth</th>
+        </tr>
+      </thead>
+      <tbody id="passengerTable"></tbody>
+    </table>
+
+    <button onclick="downloadPDF()">⬇ Download Ticket PDF</button>
+  </div>
+
+</div>
+
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- QRious -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+
+<script>
+/* ========= UTIL ========= */
+function decodeHTML(text) {
+  const t = document.createElement("textarea");
+  t.innerHTML = text;
+  return t.value;
+}
+
+/* ========= LOAD DATA ========= */
+const ticket = JSON.parse(sessionStorage.getItem("ticketData"));
+if (!ticket) {
+  alert("No ticket data found");
+  window.location = "booking.html";
+}
+
+document.getElementById("pnr").innerText = ticket.pnr;
+document.getElementById("train").innerText =
+  `${decodeHTML(ticket.train_name)} (${ticket.train_no})`;
+document.getElementById("route").innerText =
+  `${decodeHTML(ticket.source)} -> ${decodeHTML(ticket.destination)}`;
+document.getElementById("date").innerText = ticket.journey_date;
+document.getElementById("seatClass").innerText = ticket.seat_class;
+document.getElementById("amount").innerText = `Rs. ${ticket.amount}`;
+document.getElementById("time").innerText = new Date().toLocaleString();
+
+const tbody = document.getElementById("passengerTable");
+ticket.passengers.forEach(p => {
+  tbody.innerHTML += `
+    <tr>
+      <td>${decodeHTML(p.name)}</td>
+      <td>${p.age}</td>
+      <td>${p.gender}</td>
+      <td>${p.coach}</td>
+      <td>${p.seat_no}</td>
+      <td>${p.berth}</td>
+    </tr>`;
+});
+
+/* ========= PDF ========= */
+function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF("p", "mm", "a4");
+
+  /* WATERMARK */
+  doc.setTextColor(210);
+  doc.setFontSize(40);
+  doc.text("IRCTC - INDIAN RAILWAYS", 105, 160, { angle: 45, align: "center" });
+  doc.setTextColor(0);
+
+  /* LOGO (SAFE BASE64) */
+  try {
+    const logo =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j4FoAAAAASUVORK5CYII=";
+    doc.addImage(logo, "PNG", 10, 10, 25, 25);
+  } catch (e) {}
+
+  /* QR CODE */
+  const qr = new QRious({
+    value: `PNR:${ticket.pnr}|Train:${ticket.train_no}|Date:${ticket.journey_date}`,
+    size: 100
+  });
+  doc.addImage(qr.toDataURL(), "PNG", 165, 10, 30, 30);
+
+  let y = 45;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("IRCTC - INDIAN RAILWAYS", 105, y, { align: "center" });
+
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.text("Electronic Reservation Slip", 105, y, { align: "center" });
+
+  y += 5;
+  doc.line(10, y, 200, y);
+
+  y += 10;
+  doc.setFontSize(10);
+
+  doc.text(`PNR           : ${ticket.pnr}`, 12, y); y += 6;
+  doc.text(`Train         : ${decodeHTML(ticket.train_name)} (${ticket.train_no})`, 12, y); y += 6;
+  doc.text(`Route         : ${decodeHTML(ticket.source)} -> ${decodeHTML(ticket.destination)}`, 12, y); y += 6;
+  doc.text(`Journey Date  : ${ticket.journey_date}`, 12, y); y += 6;
+  doc.text(`Class         : ${ticket.seat_class}`, 12, y); y += 6;
+  doc.text(`Fare Paid     : Rs. ${ticket.amount}`, 12, y); y += 6;
+  doc.text(`Booking Time  : ${new Date().toLocaleString()}`, 12, y);
+
+  y += 6;
+  doc.line(10, y, 200, y);
+
+  y += 8;
+  doc.setFont("helvetica", "bold");
+  doc.text("Passenger Details", 12, y);
+
+  y += 6;
+  doc.setFontSize(9);
+  doc.text("Name", 12, y);
+  doc.text("Age", 60, y);
+  doc.text("Gender", 75, y);
+  doc.text("Coach", 105, y);
+  doc.text("Seat", 130, y);
+  doc.text("Berth", 155, y);
+
+  y += 2;
+  doc.line(10, y, 200, y);
+
+  y += 6;
+  doc.setFont("helvetica", "normal");
+
+  ticket.passengers.forEach(p => {
+    doc.text(decodeHTML(p.name), 12, y);
+    doc.text(String(p.age), 60, y);
+    doc.text(p.gender, 75, y);
+    doc.text(p.coach, 105, y);
+    doc.text(p.seat_no, 130, y);
+    doc.text(p.berth, 155, y);
+    y += 6;
+  });
+
+  y += 8;
+  doc.text("Payment Status : SUCCESSFUL", 12, y);
+
+  doc.save(`IRCTC_${ticket.pnr}.pdf`);
+}
+</script>
+
+</body>
+</html>

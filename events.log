@@ -1,0 +1,5 @@
+{"event_id": "77b8988e-49fa-429f-ba49-d839748d7a84", "event_type": "TICKET_BOOKED", "timestamp": "2026-06-15T09:28:14.332483", "source": "train-ticket-booking-api", "payload": {"pnr": "09FCA4C4"}}
+{"event_id": "56bd5f38-de06-49f9-b513-d8ade5cb988f", "event_type": "USER_LOGGED_IN", "timestamp": "2026-06-17T05:42:21.086788", "source": "train-ticket-booking-api", "payload": {"email": "satya123@irctc.com"}}
+{"event_id": "3c5da3d5-34d1-41fe-babf-3d6a60c69482", "event_type": "TICKET_BOOKED", "timestamp": "2026-06-17T05:46:37.782869", "source": "train-ticket-booking-api", "payload": {"pnr": "44EB3045"}}
+{"event_id": "c40a4d97-1a8d-4b11-b81f-0e49bf81cb10", "event_type": "WEB_CHECKIN_COMPLETED", "timestamp": "2026-06-17T05:47:14.139434", "source": "train-ticket-booking-api", "payload": {"pnr": "44EB3045", "train_no": "13401", "journey_date": "2026-06-17"}}
+{"event_id": "99aec23f-bfee-44d5-a05e-20078fa97dae", "event_type": "TICKET_BOOKED", "timestamp": "2026-06-17T06:09:58.811831", "source": "train-ticket-booking-api", "payload": {"pnr": "29F7AEC2"}}

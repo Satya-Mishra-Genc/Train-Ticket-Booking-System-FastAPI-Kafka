@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>📄 Booking History</title>
+
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #141e30, #243b55);
+  margin: 0;
+}
+
+h2 {
+  text-align: center;
+  color: white;
+  margin-top: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 30px auto;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.cancel {
+  background: crimson;
+  color: white;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 13px;
+}
+
+.confirmed {
+  background: green;
+}
+
+.cancelled {
+  background: red;
+}
+
+.note {
+  text-align: center;
+  color: #ddd;
+  font-size: 13px;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>📄 Booking History</h2>
+
+<div class="container" id="list"></div>
+
+<p class="note">
+Showing all bookings (latest first)
+</p>
+
+<script>
+const list = document.getElementById("list");
+
+/*  LOAD FULL BOOKING HISTORY */
+function loadBookings() {
+
+  fetch("http://127.0.0.1:8000/pnr/history")
+    .then(r => r.json())
+    .then(data => {
+
+      list.innerHTML = "";
+
+      if (!Array.isArray(data) || data.length === 0) {
+        list.innerHTML = `
+          <p style="color:white;text-align:center;">
+            No bookings found
+          </p>
+        `;
+        return;
+      }
+
+      data.forEach(t => {
+
+        list.innerHTML += `
+          <div class="card">
+
+            <div class="row">
+              <div>
+                <b>PNR:</b> ${t.pnr}<br>
+                <b>Name:</b> ${t.passenger_name}<br>
+                <b>Train:</b> ${t.train_no}<br>
+                <b>Route:</b> ${t.source} → ${t.destination}<br>
+                <b>Date:</b> ${t.journey_date}<br>
+                <b>Seat:</b> ${t.seat_no}
+              </div>
+
+              <div style="text-align:right;">
+                <span class="status ${t.status === 'CONFIRMED' ? 'confirmed' : 'cancelled'}">
+                  ${t.status}
+                </span>
+
+                <br><br>
+
+                ${
+                  t.status === "CONFIRMED"
+                  ? `<button class="cancel" onclick="cancelTicket('${t.pnr}')">
+                       Cancel Ticket
+                     </button>`
+                  : ""
+                }
+              </div>
+            </div>
+
+          </div>
+        `;
+      });
+
+    })
+    .catch(err => {
+      console.error(err);
+      list.innerHTML = `
+        <p style="color:white;text-align:center;">
+          Failed to load booking history
+        </p>
+      `;
+    });
+}
+
+/*  CANCEL TICKET */
+function cancelTicket(pnr) {
+
+  const confirmCancel = confirm(
+    "Are you sure you want to cancel this ticket?\nThis action cannot be undone."
+  );
+
+  if (!confirmCancel) return;
+
+  fetch(`http://127.0.0.1:8000/ticket/${pnr}`, {
+    method: "DELETE"
+  })
+  .then(() => {
+    alert("Ticket cancelled successfully");
+    loadBookings();
+  })
+  .catch(() => {
+    alert("Failed to cancel ticket");
+  });
+}
+
+/*  INITIAL LOAD */
+loadBookings();
+</script>
+
+</body>
+</html>
