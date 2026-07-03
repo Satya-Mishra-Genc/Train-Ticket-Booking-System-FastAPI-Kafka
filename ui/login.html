@@ -241,7 +241,7 @@ function handleAction() {
 
   const endpoint = isLogin ? "login" : "signup";
 
-  fetch(`http://127.0.0.1:8000/${endpoint}?email=${emailVal}&password=${passVal}`, {
+  fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/${endpoint}?email=${emailVal}&password=${passVal}`, {
     method: "POST"
   })
   .then(res => res.json())
