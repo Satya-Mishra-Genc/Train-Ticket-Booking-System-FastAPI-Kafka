@@ -112,7 +112,7 @@ async function checkPNR() {
 
   try {
     //  Fetch PNR details
-    const pnrRes = await fetch(`http://127.0.0.1:8000/pnr/${pnr}`);
+    const pnrRes = await fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/pnr/${pnr}`);
     const data = await pnrRes.json();
 
     if (data.message === "Not found") {
@@ -122,8 +122,8 @@ async function checkPNR() {
 
     //  Fetch train details (to get origin departure time)
     const trainRes = await fetch(
-      `http://127.0.0.1:8000/train/${data.train_no}?journey_date=${data.journey_date}`
-    );
+  `https://train-ticket-booking-system-fastapi-kafka.onrender.com/train/${data.train_no}?journey_date=${data.journey_date}`
+);
     const train = await trainRes.json();
 
     if (train.message) {
