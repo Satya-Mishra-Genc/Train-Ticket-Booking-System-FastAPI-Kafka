@@ -136,7 +136,7 @@ async function loadTatkalTrains() {
 
   for (let trainNo of tatkalTrains) {
 
-    const res = await fetch(`http://127.0.0.1:8000/train/${trainNo}?journey_date=${journeyDate}`);
+    const res = await fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/train/${trainNo}?journey_date=${journeyDate}`);
     const train = await res.json();
     if (train.message) continue;
 
@@ -189,7 +189,7 @@ function payTatkal() {
   const tatkalFare = 2000 * passengers.length;
   alert(`Tatkal Fare: Rs. ${tatkalFare}`);
 
-  fetch("http://127.0.0.1:8000/book-ticket", {
+  fetch("https://train-ticket-booking-system-fastapi-kafka.onrender.com/book-ticket", {
     method: "POST",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify({
