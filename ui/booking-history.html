@@ -89,7 +89,7 @@ const list = document.getElementById("list");
 /*  LOAD FULL BOOKING HISTORY */
 function loadBookings() {
 
-  fetch("http://127.0.0.1:8000/pnr/history")
+  fetch("https://train-ticket-booking-system-fastapi-kafka.onrender.com/pnr/history")
     .then(r => r.json())
     .then(data => {
 
@@ -160,7 +160,7 @@ function cancelTicket(pnr) {
 
   if (!confirmCancel) return;
 
-  fetch(`http://127.0.0.1:8000/ticket/${pnr}`, {
+  fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/ticket/${pnr}`, {
     method: "DELETE"
   })
   .then(() => {
