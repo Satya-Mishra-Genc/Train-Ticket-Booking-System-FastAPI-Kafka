@@ -119,7 +119,7 @@ function checkTrain() {
   }
 
   /*  FETCH TRAIN SCHEDULE */
-  fetch(`http://127.0.0.1:8000/train/${trainNo}?journey_date=${journeyDate}`)
+  fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/train/${trainNo}?journey_date=${journeyDate}`)
     .then(res => res.json())
     .then(train => {
 
@@ -161,7 +161,7 @@ function checkTrain() {
       result.innerHTML = output;
 
       /*  FETCH RUNNING STATUS */
-      fetch(`http://127.0.0.1:8000/status/${trainNo}?journey_date=${journeyDate}`)
+      fetch(`https://train-ticket-booking-system-fastapi-kafka.onrender.com/status/${trainNo}?journey_date=${journeyDate}`)
         .then(res => res.json())
         .then(status => {
 
